@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -49,17 +50,61 @@ func CountJobs(f *excelize.File) (int, error) {
 		return 0, err
 	}
 
-	numJobs := 0
+	return len(rows) - 1, nil
+}
 
-	for _, row := range rows {
-		if row[0] != "" {
-			numJobs++
+func AddJob(f *excelize.File, job Job) error {
+	rows, err := f.GetRows("MyJobHunt")
+	if err != nil {
+		return err
+	}
+	newRow := len(rows) + 1
+	headers := []string{
+		"Company",
+		"Website",
+		"Role",
+		"Description",
+		"Skills",
+		"Contacts",
+		"Location",
+		"Status",
+		"Date",
+		"Notes",
+	}
+
+	for _, key := range headers {
+		switch key {
+		case "Company":
+			f.SetCellValue("MyJobHunt", "A"+strconv.Itoa(newRow), job.Company)
+		case "Website":
+			f.SetCellValue("MyJobHunt", "B"+strconv.Itoa(newRow), job.Website)
+		case "Role":
+			f.SetCellValue("MyJobHunt", "C"+strconv.Itoa(newRow), job.Role)
+		case "Description":
+			f.SetCellValue("MyJobHunt", "D"+strconv.Itoa(newRow), job.Description)
+		case "Skills":
+			fmt.Println(job.Skills)
+			f.SetCellValue("MyJobHunt", "E"+strconv.Itoa(newRow), job.Skills)
+		case "Contacts":
+			f.SetCellValue("MyJobHunt", "F"+strconv.Itoa(newRow), job.Contacts)
+		case "Location":
+			f.SetCellValue("MyJobHunt", "G"+strconv.Itoa(newRow), job.Location)
+		case "Status":
+			f.SetCellValue("MyJobHunt", "H"+strconv.Itoa(newRow), job.Status)
+		case "Date":
+			f.SetCellValue("MyJobHunt", "I"+strconv.Itoa(newRow), job.Date)
+		case "Notes":
+			f.SetCellValue("MyJobHunt", "J"+strconv.Itoa(newRow), job.Notes)
 		}
 	}
 
-	return numJobs - 1, nil
+	err = f.SaveAs("MyJobHunt.xlsx")
+	if err != nil {
+		return err
+	}
+	fmt.Println("Job application was successfully added!")
+	return nil
 }
 
-// TODO: AddJob function
 // TODO: EditJob function
 // TODO: GetStats function

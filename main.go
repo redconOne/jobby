@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/huh"
@@ -11,7 +12,7 @@ import (
 )
 
 type Job struct {
-	Date        time.Time
+	Date        string
 	Company     string
 	Website     string
 	Role        string
@@ -46,9 +47,13 @@ func main() {
 	}
 	defer f.Close()
 
-	// TODO: Add job variable for use in adding new job to sheet
-	// job       Job
-	var operation string
+	var (
+		operation       string
+		job             Job
+		jobSkills       string
+		jobContact      string
+		contactPlatform string
+	)
 
 	numJobs, err := CountJobs(f)
 	if err != nil {
@@ -92,4 +97,62 @@ func main() {
 	_ = spinner.New().Title("One moment please...").Accessible(accessible).Action(prepareOperation).Run()
 
 	// TODO: Handle main menu options (Add, Edit, Stats, Exit)
+
+	switch operation {
+	case "Add a new job application":
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Company name:").
+					Value(&job.Company),
+				huh.NewInput().
+					Title("Company website:").
+					Value(&job.Website),
+			),
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Role:").
+					Value(&job.Role),
+				huh.NewText().
+					Title("Job Description:").
+					Value(&job.Description),
+				huh.NewInput().
+					Title("Required Skills:").
+					Description("Separated by , EG[Go, Python, Rust, etc]").
+					Value(&jobSkills),
+				huh.NewInput().
+					Title("Location:").
+					Description("Please use remote, local, or city/state").
+					Value(&job.Location),
+			),
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Contact:").
+					Value(&jobContact),
+				huh.NewInput().
+					Title("Platform:").
+					Description("Where did you meet/contact this person?").
+					Value(&contactPlatform),
+			),
+			huh.NewGroup(
+				huh.NewText().
+					Title("Additional Notes:").
+					Value(&job.Notes),
+			),
+		).WithAccessible(accessible)
+
+		err = form.Run()
+		if err != nil {
+			fmt.Println("Uh oh:", err)
+			os.Exit(1)
+		}
+
+		job.Skills = strings.Split(jobSkills, ", ")
+		job.Contacts = []Contact{{Name: jobContact, Platform: contactPlatform}}
+		year, month, day := time.Now().Date()
+		job.Date = fmt.Sprintf("%d-%02d-%02d", year, month, day)
+		job.Status = Applied
+
+		AddJob(f, job)
+	}
 }
